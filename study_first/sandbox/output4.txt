@@ -1,0 +1,2 @@
+-rw-r--r-- 1 saalarco 2019   0 Jan 27 18:30 innoput.txt
+-rw-r--r-- 1 saalarco 2019  17 Jan 27 18:26 input.txt
