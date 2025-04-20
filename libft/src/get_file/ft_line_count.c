@@ -1,13 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   outfile                                            :+:      :+:    :+:   */
+/*   ft_line_count.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
+/*   By: saalarco <saalarco@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/20 13:15:24 by saalarco          #+#    #+#             */
-/*   Updated: 2025/04/20 13:21:21 by saalarco         ###   ########.fr       */
+/*   Created: 2024/12/09 18:08:12 by saalarco          #+#    #+#             */
+/*   Updated: 2024/12/21 11:21:23 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "get_file.h"
 
+size_t	ft_line_count(t_list *lst)
+{
+	return ((size_t)ft_lstsize(lst));
+}

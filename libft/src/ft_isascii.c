@@ -1,13 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   outfile                                            :+:      :+:    :+:   */
+/*   ft_isascii.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
+/*   By: saalarco <saalarco@student.42madrid>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/20 13:15:24 by saalarco          #+#    #+#             */
-/*   Updated: 2025/04/20 13:21:21 by saalarco         ###   ########.fr       */
+/*   Created: 2024/01/10 12:18:30 by saalarco          #+#    #+#             */
+/*   Updated: 2024/01/10 12:18:35 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
+int	ft_isascii(int c)
+{
+	if (c >= 0 && c <= 127)
+		return (1);
+	return (0);
+}
+/* Function returns 1 is argument char is (0 .. 127)*/
