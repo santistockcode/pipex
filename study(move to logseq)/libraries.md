@@ -1,0 +1,24 @@
+fcntl.h
+    open
+    unlink
+unistd.h
+    read
+    write
+    cose
+    access
+    pipe
+    fork
+    execve
+    dup
+    dup2
+sys/wait.h
+    wait
+    waitpid
+stdlib.h
+    malloc
+    free
+    exit
+stdio.h
+    perror
+string.h
+    strerror
