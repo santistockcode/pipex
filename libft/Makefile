@@ -4,6 +4,7 @@ NAME = libft.a
 CC = gcc
 CFLAGS = -g -Wall -Wextra -Werror
 AR = ar rcs
+MAKEFLAGS += --no-print-directory
 INCLUDE = -Iinclude
 SRC := src/ft_atoi.c \
 		src/ft_bzero.c \
@@ -68,6 +69,21 @@ SRC := src/ft_atoi.c \
 		src/get_file/ft_get_line_at.c \
 		src/get_file/ft_file_get_line.c
 
+ifdef VERBOSE
+    Q :=
+else
+    Q := @
+endif
+
+CLR_RMV   := \033[0m
+RED       := \033[1;31m
+GREEN     := \033[1;32m
+YELLOW    := \033[1;33m
+BLUE      := \033[1;34m
+CYAN      := \033[1;36m
+BPURPLE   := \033[1;35m
+BLINK	  := \033[5m
+
 OBJ_DIR = obj
 TEST_DIR     = tests
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
@@ -86,14 +102,14 @@ TEST_GET_FILE_BIN  = ./tests/test_get_file_module
 all : $(NAME)
 
 $(NAME): $(OBJ)
-	@$(AR) $(NAME) $(OBJ)
-	@printf "$(YELLOW)$(BLINK)the libftbrary is open$(RESET)\n"
+	$(Q)@$(AR) $(NAME) $(OBJ)
+	@echo "$(YELLOW)[libft]$(CLR_RMV) done"
 
 $(OBJ_DIR)/%.o: %.c | $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(Q)$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 $(OBJ_DIR):
-	mkdir -p \
+	$(Q)mkdir -p \
 	$(OBJ_DIR)/src \
 	$(OBJ_DIR)/src/lists \
 	$(OBJ_DIR)/src/ft_printf \
