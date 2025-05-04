@@ -10,9 +10,9 @@
 #                                                                              #
 # **************************************************************************** #
 
-###############################################################################
-#                              PROJECT SETTINGS                               #
-###############################################################################
+####
+# VARIABLES
+####
 
 NAME		:= pipex
 CC			:= cc
@@ -34,7 +34,6 @@ PIPEX_BIN	:= ./$(NAME)
 # no print directory
 MAKEFLAGS += --no-print-directory
 
-
 # Verbose mode (make VERBOSE=1)
 ifdef VERBOSE
     Q :=
@@ -42,13 +41,9 @@ else
     Q := @
 endif
 
-.PHONY: all debug fsanitize fuzz valgrind coverage format lint doc \
-        test test_clean clean fclean re help
-
-
-###############################################################################
-#                              COLOR SETTINGS                                 #
-###############################################################################
+####
+# COLOR SETTINGS
+####
 
 CLR_RMV   := \033[0m
 RED       := \033[1;31m
@@ -58,25 +53,29 @@ BLUE      := \033[1;34m
 CYAN      := \033[1;36m
 BPURPLE   := \033[1;35m
 
-################################################################################
-#                                 PROGRAM'S SRCS                               #
-################################################################################
+####
+# PROGRAM'S SRCS
+####
 
 SRCS	:= src/main.c \
 			src/child1/child1_cmd1.c \
-			src/child2/child2_cmd2.c      
+			src/child2/child2_cmd2.c \
+			src/utils/cmdpath.c
 OBJS	:= $(SRCS:.c=.o)
 
-###############################################################################
-#                              TEST DIRECTORIES & FILES                       #
-###############################################################################
+####
+# TEST DIRECTORIES & FILES
+####
 
 TEST_INPUT_DIR  := tests/input
 TEST_OUTPUT_DIR := tests/output
 
-###############################################################################
-#                              DEFAULT RULES                                  #
-###############################################################################
+####
+# DEFAULT RULES
+####
+
+.PHONY: all debug fsanitize fuzz valgrind coverage format lint doc \
+        test test_clean clean fclean re help
 
 all: $(NAME)
 
@@ -84,6 +83,7 @@ all: $(NAME)
 debug: CFLAGS += -g3 -O0
 debug: $(NAME)
 
+# instant valgrind, UndefinedBehaviorSanitizer (UBSan) and AddressSanitizer (ASan)	
 fsanitize: CFLAGS += $(SAN_FLAGS)
 fsanitize: $(NAME)
 
@@ -105,22 +105,26 @@ $(NAME): $(OBJS) $(LIBFT_LIB)
 	@echo "$(CYAN)[pipex]$(CLR_RMV) $<"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@ $(HEADERS)
 
-###############################################################################
-#                              LIBRARIES                                      #
-###############################################################################
+####
+# LIBRARIES
+####
 
 $(LIBFT_LIB):
 	@echo "$(YELLOW)[libft]$(CLR_RMV) building"
 	$(Q)$(MAKE) -C $(LIBFT_DIR)
 
-###############################################################################
-#                              TESTS                                          #
-###############################################################################
+####
+# TESTS
+####
 
 test: all
 	$(Q)mkdir -p $(TEST_OUTPUT_DIR)
 	@echo "$(CYAN)[test]$(CLR_RMV) bash tests/test_runner.sh"
 	$(Q)bash tests/test_runner.sh "$(PIPEX_BIN)" "$(TEST_INPUT_DIR)" "$(TEST_OUTPUT_DIR)"
+
+test-unit:
+	$(CC) $(CFLAGS) $(addprefix tests/unit/, *.c) $(OBJ) -lcriterion -o unit_tests
+	./unit_tests --fail-fast
 
 valgrind: all
 	@echo "$(CYAN)[valgrind]$(CLR_RMV) running"
@@ -132,9 +136,9 @@ fuzz-run: fuzz
 test_clean:
 	$(Q)rm -rf $(TEST_OUTPUT_DIR)
 
-###############################################################################
-#                           LINT/FORMAT/DOCS                                  #
-###############################################################################
+####
+# LINT/FORMAT/DOCS
+####
 
 format:
 	@echo "$(BLUE)[clang‑format]$(CLR_RMV)"
@@ -148,9 +152,9 @@ doc:
 	@echo "$(BLUe)[doxygen]$(CLR_RMV)"
 	$(Q)doxygen docs/Doxyfile
 
-###############################################################################
-#                              CLEAN RULES                                    #
-###############################################################################
+####
+# CLEANING RULES
+####
 
 clean:
 	@echo "$(RED)[Cleaning objects]$(CLR_RMV)"
@@ -165,6 +169,10 @@ fclean: clean
 	$(Q)$(MAKE) -C $(LIBFT_DIR) fclean
 
 re: fclean all
+
+####
+# HELP
+####
 
 help:
 	@echo "Targets:"

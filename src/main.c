@@ -27,9 +27,13 @@ int main(int argc, char **argv)
 	int file2;
 
 	if (argc != 5)
-		ft_printf("Wrong number of arguments");
+		return(ft_printf("Wrong number of arguments\n"), 1);
 	file1 = open(argv[1], O_RDONLY);
+	if (file1 == -1)
+		return(ft_printf("Error opening file %s\n", argv[1]), 1);
 	file2 = open(argv[argc - 1], O_TRUNC | O_CREAT | O_RDWR, 0000644);
+	if (file2 == -1)
+		return(ft_printf("Error opening file %s\n", argv[argc - 1]), 1);
 	if(pipe(p) == -1)
 		exit(-1);
 	pid1 = fork();

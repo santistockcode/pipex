@@ -14,7 +14,7 @@
 
 void    callexecve2()
 {
- char *const args[] = { "wc", NULL };
+ char *const args[] = { "wc", "-l", NULL };
  char *const envp[] = { NULL };
  
  execve("/usr/bin/wc", args, envp);
