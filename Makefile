@@ -6,7 +6,7 @@
 #    By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/11/04 17:50:16 by saalarco          #+#    #+#              #
-#    Updated: 2025/05/02 12:30:06 by saalarco         ###   ########.fr        #
+#    Updated: 2025/05/06 19:34:14 by saalarco         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,9 @@ SAN_FLAGS	:= -fsanitize=address,undefined -g3
 FUZZ_FLAGS	:= -fsanitize=fuzzer,address -DFUZZING
 # -fprofile-arcs -ftest-coverage for code coverage  (execution count and generate .gcno and gcda fles
 COV_FLAGS	:= -fprofile-arcs -ftest-coverage -g
+# criterion flags
+CRIT_CFLAGS := $(shell pkg-config --cflags criterion 2>/dev/null)
+CRIT_LIBS   := $(shell pkg-config --libs   criterion 2>/dev/null)
 # Headers
 HEADERS		:= -I ./include
 # Libraries
@@ -57,11 +60,15 @@ BPURPLE   := \033[1;35m
 # PROGRAM'S SRCS
 ####
 
-SRCS	:= src/main.c \
-			src/child1/child1_cmd1.c \
-			src/child2/child2_cmd2.c \
-			src/utils/cmdpath.c
-OBJS	:= $(SRCS:.c=.o)
+SRCS_PROD := src/main.c \
+    src/child1/child1_cmd1.c \
+    src/child2/child2_cmd2.c \
+    src/utils/cmdpath.c
+
+OBJS_PROD := $(SRCS_PROD:.c=.o)
+
+SRCS_CORE  := $(filter-out src/main.c,$(SRCS_PROD))
+OBJS_CORE  := $(SRCS_CORE:.c=.o)
 
 ####
 # TEST DIRECTORIES & FILES
@@ -96,7 +103,7 @@ coverage: $(NAME)
 	@echo "$(GRN)[coverage] open coverage_html/index.html$(CLR)"
 
 # Compile the main executable 
-$(NAME): $(OBJS) $(LIBFT_LIB) 
+$(NAME): $(OBJS_PROD) $(LIBFT_LIB) 
 	@echo "$(CYAN)[pipex]$(CLR_RMV) $@"
 	$(Q)$(CC) $(CFLAGS) $^ $(LIBS) $(HEADERS) $(LDFLAGS) -o $@
 
@@ -117,14 +124,22 @@ $(LIBFT_LIB):
 # TESTS
 ####
 
-test: all
+test: test-unit
 	$(Q)mkdir -p $(TEST_OUTPUT_DIR)
 	@echo "$(CYAN)[test]$(CLR_RMV) bash tests/test_runner.sh"
 	$(Q)bash tests/test_runner.sh "$(PIPEX_BIN)" "$(TEST_INPUT_DIR)" "$(TEST_OUTPUT_DIR)"
 
-test-unit:
-	$(CC) $(CFLAGS) $(addprefix tests/unit/, *.c) $(OBJ) -lcriterion -o unit_tests
-	./unit_tests --fail-fast
+UNIT_SRCS := $(wildcard tests/unit/*.c)
+UNIT_OBJS := $(UNIT_SRCS:.c=.o)
+UNIT_BIN  := unit_tests
+
+test-unit: $(UNIT_BIN)
+
+$(UNIT_BIN): $(UNIT_OBJS) $(OBJS_CORE) $(LIBFT_LIB)
+	$(Q)$(CC) $(CFLAGS) $(CRIT_CFLAGS) \
+	      $(UNIT_OBJS) $(OBJS_CORE) $(LIBFT_LIB) $(CRIT_LIBS) \
+	      -o $@
+	./$@ --color --fail-fast
 
 valgrind: all
 	@echo "$(CYAN)[valgrind]$(CLR_RMV) running"
@@ -158,7 +173,7 @@ doc:
 
 clean:
 	@echo "$(RED)[Cleaning objects]$(CLR_RMV)"
-	$(Q)rm -rf $(OBJS)
+	$(Q)rm -rf $(OBJS_PROD)
 	$(Q)$(MAKE) -C $(LIBFT_DIR) clean
 
 
@@ -166,6 +181,7 @@ fclean: clean
 	@echo "$(RED)[Removing executables]$(CLR_RMV)"
 	$(Q)rm -f $(NAME) *.gcno *.gcda coverage.info
 	$(Q)rm -rf coverage_html
+	$(Q)rm -f $(UNIT_BIN) $(UNIT_OBJS)
 	$(Q)$(MAKE) -C $(LIBFT_DIR) fclean
 
 re: fclean all
