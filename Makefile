@@ -6,7 +6,7 @@
 #    By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/11/04 17:50:16 by saalarco          #+#    #+#              #
-#    Updated: 2025/05/06 19:34:14 by saalarco         ###   ########.fr        #
+#    Updated: 2025/05/09 19:15:39 by saalarco         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,9 +23,11 @@ SAN_FLAGS	:= -fsanitize=address,undefined -g3
 FUZZ_FLAGS	:= -fsanitize=fuzzer,address -DFUZZING
 # -fprofile-arcs -ftest-coverage for code coverage  (execution count and generate .gcno and gcda fles
 COV_FLAGS	:= -fprofile-arcs -ftest-coverage -g
-# criterion flags
+# criterion flags (inside container)
 CRIT_CFLAGS := $(shell pkg-config --cflags criterion 2>/dev/null)
 CRIT_LIBS   := $(shell pkg-config --libs   criterion 2>/dev/null)
+# criterion AND debugging tools
+DBG_FLAGS     := -g3 -O0 -DCRITERION_DISABLE_FORKING
 # Headers
 HEADERS		:= -I ./include
 # Libraries
@@ -67,6 +69,7 @@ SRCS_PROD := src/main.c \
 
 OBJS_PROD := $(SRCS_PROD:.c=.o)
 
+# core objects without main for testing unit
 SRCS_CORE  := $(filter-out src/main.c,$(SRCS_PROD))
 OBJS_CORE  := $(SRCS_CORE:.c=.o)
 
@@ -124,22 +127,41 @@ $(LIBFT_LIB):
 # TESTS
 ####
 
-test: test-unit
+# general tests
+test: unit
 	$(Q)mkdir -p $(TEST_OUTPUT_DIR)
 	@echo "$(CYAN)[test]$(CLR_RMV) bash tests/test_runner.sh"
 	$(Q)bash tests/test_runner.sh "$(PIPEX_BIN)" "$(TEST_INPUT_DIR)" "$(TEST_OUTPUT_DIR)"
 
+# unit tests objects
 UNIT_SRCS := $(wildcard tests/unit/*.c)
 UNIT_OBJS := $(UNIT_SRCS:.c=.o)
 UNIT_BIN  := unit_tests
 
-test-unit: $(UNIT_BIN)
+unit: $(UNIT_BIN)
 
+# Compile the unit test executable (core + unit tests)
 $(UNIT_BIN): $(UNIT_OBJS) $(OBJS_CORE) $(LIBFT_LIB)
 	$(Q)$(CC) $(CFLAGS) $(CRIT_CFLAGS) \
-	      $(UNIT_OBJS) $(OBJS_CORE) $(LIBFT_LIB) $(CRIT_LIBS) \
-	      -o $@
+		$(UNIT_OBJS) $(OBJS_CORE) $(LIBFT_LIB) $(CRIT_LIBS) \
+		-o $@
 	./$@ --color --fail-fast
+
+UNIT_BIN_DBG  := unit_tests_dbg
+TEST ?=
+PORT ?=1234
+unit-debug: CFLAGS += $(DBG_FLAGS)
+unit-debug: $(UNIT_BIN_DBG)
+	@./$(UNIT_BIN_DBG) --debug=gdb --debug-transport=tcp:$(PORT) \
+	    $(if $(TEST),--filter $(TEST))
+
+$(UNIT_BIN_DBG): $(UNIT_OBJS) $(OBJS_CORE) $(LIBFT_LIB)
+	$(CC) $(CFLAGS) $(CRIT_CFLAGS) \
+	     $^ $(CRIT_LIBS) -o $@
+
+# script to target remote :1234 from gdbserver
+attach-gdb:
+	@tools/attach_gdb.sh $(PORT)
 
 valgrind: all
 	@echo "$(CYAN)[valgrind]$(CLR_RMV) running"
@@ -182,6 +204,7 @@ fclean: clean
 	$(Q)rm -f $(NAME) *.gcno *.gcda coverage.info
 	$(Q)rm -rf coverage_html
 	$(Q)rm -f $(UNIT_BIN) $(UNIT_OBJS)
+	$(Q)rm -f $(UNIT_BIN_DBG)
 	$(Q)$(MAKE) -C $(LIBFT_DIR) fclean
 
 re: fclean all
@@ -194,6 +217,8 @@ help:
 	@echo "Targets:"
 	@echo "  all           – release build (default)"
 	@echo "  debug         – -g3 -O0 build"
+	@echo "  unit-debug    – debug build TEST=some_suite/some_test"
+	@echo "  unit		   – unit tests"
 	@echo "  fsanitize     – address+UB sanitizers"
 	@echo "  fuzz          – libFuzzer instrumentation"
 	@echo "  valgrind      – run Valgrind test suite"

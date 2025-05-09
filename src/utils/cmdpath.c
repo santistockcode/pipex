@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
+// made by copilot 
 char *cmd_resolve_path(const char *cmd, char *const envp[])
 {
     char	*path;

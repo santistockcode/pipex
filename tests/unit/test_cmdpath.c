@@ -3,7 +3,7 @@
 #include "../../include/utils.h"
 #include <unistd.h>
 
-Test(cmd_resolve_path, finds_ls_on_normal_path)
+Test(cmd_resolve_path,1)
 {
     char *fake_env[] = { "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", NULL };
     char *p = cmd_resolve_path("ls", fake_env);
