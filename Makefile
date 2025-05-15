@@ -6,7 +6,7 @@
 #    By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/11/04 17:50:16 by saalarco          #+#    #+#              #
-#    Updated: 2025/05/09 19:15:39 by saalarco         ###   ########.fr        #
+#    Updated: 2025/05/15 11:59:14 by saalarco         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,8 +19,6 @@ CC			:= cc
 CFLAGS    	:= -Wall -Wextra -Werror
 # AddressSanitizer, UndefinedBehaviorSanitizer and -g3 for debugging
 SAN_FLAGS	:= -fsanitize=address,undefined -g3
-# Fuzzing flags. Include or exclude code in source files using #ifdef FUZZING
-FUZZ_FLAGS	:= -fsanitize=fuzzer,address -DFUZZING
 # -fprofile-arcs -ftest-coverage for code coverage  (execution count and generate .gcno and gcda fles
 COV_FLAGS	:= -fprofile-arcs -ftest-coverage -g
 # criterion flags (inside container)
@@ -65,7 +63,7 @@ BPURPLE   := \033[1;35m
 SRCS_PROD := src/main.c \
     src/child1/child1_cmd1.c \
     src/child2/child2_cmd2.c \
-    src/utils/cmdpath.c
+    src/utils/path_from_cmdname.c
 
 OBJS_PROD := $(SRCS_PROD:.c=.o)
 
@@ -84,7 +82,7 @@ TEST_OUTPUT_DIR := tests/output
 # DEFAULT RULES
 ####
 
-.PHONY: all debug fsanitize fuzz valgrind coverage format lint doc \
+.PHONY: all debug fsanitize valgrind coverage format lint doc \
         test test_clean clean fclean re help
 
 all: $(NAME)
@@ -128,7 +126,7 @@ $(LIBFT_LIB):
 ####
 
 # general tests
-test: unit
+test:
 	$(Q)mkdir -p $(TEST_OUTPUT_DIR)
 	@echo "$(CYAN)[test]$(CLR_RMV) bash tests/test_runner.sh"
 	$(Q)bash tests/test_runner.sh "$(PIPEX_BIN)" "$(TEST_INPUT_DIR)" "$(TEST_OUTPUT_DIR)"
@@ -166,9 +164,6 @@ attach-gdb:
 valgrind: all
 	@echo "$(CYAN)[valgrind]$(CLR_RMV) running"
 	$(Q)bash tools/valgrind_suite.sh "$(PIPEX_BIN)"
-
-fuzz-run: fuzz
-	$(Q)$(PIPEX_BIN)_fuzz
 
 test_clean:
 	$(Q)rm -rf $(TEST_OUTPUT_DIR)
@@ -220,7 +215,6 @@ help:
 	@echo "  unit-debug    – debug build TEST=some_suite/some_test"
 	@echo "  unit		   – unit tests"
 	@echo "  fsanitize     – address+UB sanitizers"
-	@echo "  fuzz          – libFuzzer instrumentation"
 	@echo "  valgrind      – run Valgrind test suite"
 	@echo "  coverage      – GCov + HTML report"
 	@echo "  test          – run bash test_runner.sh"

@@ -33,8 +33,6 @@ docker exec -it <container-id> bash)(ver pasitos arriba)
 
 # EXPLICACIÓN
 
-Thought for a couple of seconds
-
 
 ### Quick theory recap
 
