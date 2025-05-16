@@ -1,28 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
+bin="$1"        # ./pipex
+indir="$2"      # tests/input
+outdir="$3"     # tests/output
 
-PIPEX_BIN=$1
-INPUT_DIR=$2
-OUTPUT_DIR=$3
+fail=0
+for in_file in "$indir"/*.in; do
+    base=$(basename "$in_file" .in)
+    exp="$indir/$base.exp"
+    out="$outdir/$base.out"
 
-# Test case: invalid input file with "grep hello | sleep 3"
-INFILE="$INPUT_DIR/example"
-OUTFILE_PIPEX="$OUTPUT_DIR/pipex_output.txt"
-OUTFILE_SHELL="$OUTPUT_DIR/shell_output.txt"
-
-CMD1="ls"
-CMD2="wc"
-
-# Run your pipex program
-$PIPEX_BIN "$INFILE" "$CMD1" "$CMD2" "$OUTFILE_PIPEX" 2>/dev/null
-
-# Run shell equivalent
-< "$INFILE" ls | wc > "$OUTFILE_SHELL" 2>/dev/null
-
-# Compare outputs
-if diff "$OUTFILE_PIPEX" "$OUTFILE_SHELL" > /dev/null; then
-    echo -e "\033[1;32m[OK]\033[0m Output matches shell behavior."
-else
-    echo -e "\033[1;31m[FAIL]\033[0m Output differs from shell behavior."
-    echo "Diff:"
-    diff "$OUTFILE_PIPEX" "$OUTFILE_SHELL"
-fi
+    eval "$bin $(cat "$in_file")" >"$out" 2>&1 # eval is a workarround to parse double quotes
+    if diff -u "$exp" "$out"; then
+        printf '✅  %s\n' "$base"
+    else
+        printf '❌  %s\n' "$base"; fail=1
+    fi
+done
+exit $fail

@@ -6,7 +6,7 @@
 /*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 13:46:36 by saalarco          #+#    #+#             */
-/*   Updated: 2025/04/20 14:11:48 by saalarco         ###   ########.fr       */
+/*   Updated: 2025/05/12 20:12:15 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 void    callexecve2()
 {
- char *const args[] = { "wc", NULL };
+ char *const args[] = { "wc", "-l", NULL };
  char *const envp[] = { NULL };
  
  execve("/usr/bin/wc", args, envp);
