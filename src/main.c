@@ -6,7 +6,7 @@
 /*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 13:15:37 by saalarco          #+#    #+#             */
-/*   Updated: 2025/05/15 12:15:14 by saalarco         ###   ########.fr       */
+/*   Updated: 2025/05/16 18:36:44 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ and calls child_cmd1 and child_cmd2.
 Waits for them to finish. 
 */
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char *const envp[])
 {
 	int	p[2];
 	pid_t	pid1;
@@ -36,10 +36,10 @@ int main(int argc, char **argv)
 		return(ft_printf("Error opening file %s\n", argv[argc - 1]), 0);
 	if(pipe(p) == -1)
 		exit(-1);
-	// TODO: protect forks
+	// TODO: if forks fails needs to close or free p (pipe)
 	pid1 = fork();
 	if(pid1 == 0)
-		child1_cmd1(file1, p);
+		child1_cmd1(file1, p, argv[2], envp);
 	pid2 = fork();
 	if(pid2 == 0)
 		child2_cmd2(file2, p);
