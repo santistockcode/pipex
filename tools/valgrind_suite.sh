@@ -1,12 +1,23 @@
+#!/usr/bin/env bash
 bin="$1"
-cases=( "tests/input/"*.in )
-for in_file in "${cases[@]}"; do
-    args=$(cat "$in_file")
-    log="tests/valgrind/$(basename "$in_file" .in).log"
+mkdir -p tests/valgrind
+fail=0
 
-    valgrind --leak-check=full --error-exitcode=42 \
-             --log-file="$log" $bin $args || exit 1
+for in_file in tests/input/*.in; do
+    base=$(basename "$in_file" .in)
+    log="tests/valgrind/${base}.log"
 
-    # (Valgrind already exits 42 on error, so reaching here means PASS)
-    printf '✅  %s\n' "$in_file"
+    # build the command line as one string, then let *one* eval parse it
+    cmd="$bin $(cat "$in_file")"
+    eval "valgrind --leak-check=full --show-leak-kinds=all \
+          --track-origins=yes --error-exitcode=42 --trace-children=yes \
+          --log-file=\"$log\" $cmd" || fail=1
+
+    if [[ $fail -eq 0 ]]; then
+        printf '✅  %s\n' "$base"
+    else
+        printf '❌  %s (see %s)\n' "$base" "$log"
+    fi
 done
+
+exit $fail

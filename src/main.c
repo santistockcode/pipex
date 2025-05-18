@@ -42,7 +42,7 @@ int main(int argc, char **argv, char *const envp[])
 		child1_cmd1(file1, p, argv[2], envp);
 	pid2 = fork();
 	if(pid2 == 0)
-		child2_cmd2(file2, p);
+		child2_cmd2(file2, p, argv[3], envp);
 	close(p[0]);
 	close(p[1]);
 	waitpid(pid1, NULL, 0);

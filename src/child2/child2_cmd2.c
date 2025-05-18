@@ -12,22 +12,26 @@
 
 # include "../../include/pipex.h"
 
-void    callexecve2()
+void    callexecve2(char *argv, char *const envp[])
 {
- char *const args[] = { "wc", "-l", NULL };
- char *const envp[] = { NULL };
- 
- execve("/usr/bin/wc", args, envp);
- perror("execve");
+    char **args;
+    char *path;
+
+    args = ft_split(argv, ' ');
+    path = path_from_cmdname(args[0], envp);
+    // TODO: Protect
+    if (execve(path, args, envp) == -1)
+        perror("execve failed");
+    // habría que liberar path (importante)
     exit(EXIT_FAILURE);
 }
 
-void child2_cmd2(int file2, int p[2])
+void child2_cmd2(int file2, int p[2], char *argv, char *const envp[])
 {
     close(p[1]);
     dup2(file2, 1);
     close(file2);
     dup2(p[0], 0);
     close(p[0]);
-    callexecve2();
+    callexecve2(argv, envp);
 }

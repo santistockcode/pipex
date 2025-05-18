@@ -49,7 +49,7 @@
 
 
 void child1_cmd1(int file1, int p[2], char *argv, char *const envp[]);
-void child2_cmd2(int file1, int p[2]);
+void child2_cmd2(int file1, int p[2], char *argv, char *const envp[]);
 
 
 #endif
