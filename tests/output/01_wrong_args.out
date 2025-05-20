@@ -1,1 +1,1 @@
-Wrong number of arguments
+pipex: main: Usage: ./pipex file1 cmd1 cmd2 file2
