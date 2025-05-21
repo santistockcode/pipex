@@ -1,1 +1,1 @@
-pipex: main: Usage: ./pipex file1 cmd1 cmd2 file2
+pipex: usage: ./pipex file1 cmd1 cmd2 file2

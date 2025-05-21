@@ -12,6 +12,16 @@
 
 # include "../../include/pipex.h"
 
+static void open_infile2(char *filename, int *file2)
+{
+	*file2 = open(filename, O_TRUNC | O_CREAT | O_RDWR, 0000644);
+	if (*file2 == -1)
+	{
+        fprintf(stderr, "pipex: %s: %s\n", filename, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+}
+
 void    callexecve2(char *argv, char *const envp[])
 {
     char **args;
@@ -30,12 +40,15 @@ void    callexecve2(char *argv, char *const envp[])
     exit(EXIT_FAILURE);
 }
 
-void child2_cmd2(int file2, int p[2], char *argv, char *const envp[])
+void child2_cmd2(char *file2, int p[2], char *argv, char *const envp[])
 {
+    int fd2;
+
+    open_infile2(file2, &fd2);
     close(p[1]);
-    if (dup2(file2, 1) == -1)
+    if (dup2(fd2, 1) == -1)
         xfatal("dup2 failed", 1);
-    close(file2);
+    close(fd2);
     if (dup2(p[0], 0) == -1)
 	    xfatal("dup2 failed", 1);
     close(p[0]);

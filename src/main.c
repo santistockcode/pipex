@@ -38,39 +38,25 @@ Waits for them to finish.
 //     }
 // }
 
-void	init_files(int argc, char **argv, int *file1, int *file2)
-{
-	if (argc != 5)
-		error_stderror("main", "Usage: ./pipex file1 cmd1 cmd2 file2",
-			EXIT_FAILURE);
-	*file1 = open(argv[1], O_RDONLY);
-	if (*file1 == -1)
-		error_stderror("main", "Error opening file1", 1);
-	*file2 = open(argv[argc - 1], O_TRUNC | O_CREAT | O_RDWR, 0000644);
-	if (*file2 == -1)
-		error_stderror("main", "Error opening file2", 1);
-}
 
 int	main(int argc, char **argv, char *const envp[])
 {
 	int		p[2];
 	pid_t	pid1;
 	pid_t	pid2;
-	int		file1;
-	int		file2;
 	int		statusCmd2;
 
-	init_files(argc, argv, &file1, &file2);
+	if (argc != 5)
+		error_stderror("usage", "./pipex file1 cmd1 cmd2 file2",
+			EXIT_FAILURE);
 	if (pipe(p) == -1)
 		exit (-1);
 	pid1 = fork();
 	if (pid1 == 0)
-		child1_cmd1(file1, p, argv[2], envp);
+		child1_cmd1(argv[1], p, argv[2], envp);
 	pid2 = fork();
 	if (pid2 == 0)
-		child2_cmd2(file2, p, argv[3], envp);
-	close(file1);
-	close(file2);
+		child2_cmd2(argv[4], p, argv[3], envp);
 	close(p[0]);
 	close(p[1]);
 	waitpid(pid2, &statusCmd2, 0);

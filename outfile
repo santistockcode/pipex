@@ -1,15 +1,1 @@
-build
-ci
-docs
-err.log
-include
-infile
-libft
-Makefile
-outfile
-pipex
-sandbox
-src
-tests
-tools
-unit_tests
+       0       0       0
