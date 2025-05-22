@@ -14,13 +14,11 @@ OUTFILE_SHELL="shell_output.txt"
 $PIPEX_BIN "$INFILE" "$CMD1" "$CMD2" "$OUTFILE_PIPEX" 2>/dev/null
 
 # Run shell equivalent
-"$INFILE" < $(cat "$CMD1") | $(cat "$CMD2") > "$OUTFILE_SHELL" 2>/dev/null
+eval "< \"$INFILE\" $CMD1 | $CMD2 > \"$OUTFILE_SHELL\" 2>/dev/null"
 
-# Compare outputs
-if diff "$OUTFILE_PIPEX" "$OUTFILE_SHELL" > /dev/null; then
-    echo -e "\033[1;32m[OK]\033[0m Output matches shell behavior."
+if diff -q "$OUTFILE_PIPEX" "$OUTFILE_SHELL" >/dev/null; then
+    echo -e "\e[1;32m[OK]\e[0m Output matches shell behaviour."
 else
-    echo -e "\033[1;31m[FAIL]\033[0m Output differs from shell behavior."
-    echo "Diff:"
+    echo -e "\e[1;31m[FAIL]\e[0m Output differs:"
     diff "$OUTFILE_PIPEX" "$OUTFILE_SHELL"
 fi

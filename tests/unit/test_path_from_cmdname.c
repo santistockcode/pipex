@@ -11,16 +11,16 @@ Test(path_from_cmdname,1)
     free(p);
 }
 
-Test(path_from_cmdname, custom_path)
+Test(path_from_cmdname, 2)
 {
     char *fake_envp[] = { "PATH=/custom/bin:/usr/local/bin:/usr/bin", NULL };
     char *p = path_from_cmdname("ls", fake_envp);
     cr_expect_not_null(p);
-    cr_expect_str_eq(p, "/custom/bin/ls");
+    cr_expect_str_eq(p, "/usr/bin/ls");
     free(p);
 }
 
-Test(path_from_cmdname, other_env_variables)
+Test(path_from_cmdname, 3)
 {
     char *fake_envp[] = { "USER=john", "HOME=/home/john", "LANG=en_US.UTF-8", NULL };
     char *p = path_from_cmdname("ls", fake_envp);
@@ -28,7 +28,7 @@ Test(path_from_cmdname, other_env_variables)
     free(p);
 }
 
-Test(path_from_cmdname, all_env_variables)
+Test(path_from_cmdname, 4)
 {
     char *fake_envp[] = { "USER=john", "HOME=/home/john", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "LANG=en_US.UTF-8", NULL };
     char *p = path_from_cmdname("ls", fake_envp);
@@ -37,7 +37,7 @@ Test(path_from_cmdname, all_env_variables)
     free(p);
 }
 
-Test(path_from_cmdname, non_existing_command)
+Test(path_from_cmdname, 5)
 {
     char *fake_envp[] = { "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", NULL };
     char *p = path_from_cmdname("non_existing_command", fake_envp);
