@@ -1,25 +1,25 @@
-==360== Memcheck, a memory error detector
-==360== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==360== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
-==360== Command: /usr/bin/wc
-==360== Parent PID: 358
-==360== 
-==360== 
-==360== HEAP SUMMARY:
-==360==     in use at exit: 0 bytes in 0 blocks
-==360==   total heap usage: 5 allocs, 5 frees, 4,340 bytes allocated
-==360== 
-==360== All heap blocks were freed -- no leaks are possible
-==360== 
-==360== For lists of detected and suppressed errors, rerun with: -s
-==360== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
-ppressed: 0 from 0)
-==358== 
-==358== HEAP SUMMARY:
-==358==     in use at exit: 0 bytes in 0 blocks
-==358==   total heap usage: 0 allocs, 0 frees, 0 bytes allocated
-==358== 
-==358== All heap blocks were freed -- no leaks are possible
-==358== 
-==358== For lists of detected and suppressed errors, rerun with: -s
-==358== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==3822704== Memcheck, a memory error detector
+==3822704== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3822704== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==3822704== Command: /usr/bin/wc
+==3822704== Parent PID: 3822702
+==3822704== 
+==3822704== 
+==3822704== HEAP SUMMARY:
+==3822704==     in use at exit: 0 bytes in 0 blocks
+==3822704==   total heap usage: 44 allocs, 44 frees, 17,915 bytes allocated
+==3822704== 
+==3822704== All heap blocks were freed -- no leaks are possible
+==3822704== 
+==3822704== For lists of detected and suppressed errors, rerun with: -s
+==3822704== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+essed: 0 from 0)
+==3822702== 
+==3822702== HEAP SUMMARY:
+==3822702==     in use at exit: 0 bytes in 0 blocks
+==3822702==   total heap usage: 0 allocs, 0 frees, 0 bytes allocated
+==3822702== 
+==3822702== All heap blocks were freed -- no leaks are possible
+==3822702== 
+==3822702== For lists of detected and suppressed errors, rerun with: -s
+==3822702== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

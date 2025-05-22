@@ -6,7 +6,7 @@
 /*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 13:20:52 by saalarco          #+#    #+#             */
-/*   Updated: 2025/05/16 16:58:24 by saalarco         ###   ########.fr       */
+/*   Updated: 2025/05/22 19:24:06 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,15 +23,15 @@
 # include <fcntl.h>
 
 /*
-    read
-    write
-    close
-    access
-    pipe
-    fork
-    execve
-    dup
-    dup2
+	read
+	write
+	close
+	access
+	pipe
+	fork
+	execve
+	dup
+	dup2
 */
 # include <unistd.h>
 
@@ -48,9 +48,7 @@
 # include <string.h>
 # include <errno.h>
 
-
-void child1_cmd1(char *file1, int p[2], char *argv, char *const envp[]);
-void child2_cmd2(char *file2, int p[2], char *argv, char *const envp[]);
-
+void	child1_cmd1(char *file1, int p[2], char *argv, char *const envp[]);
+void	child2_cmd2(char *file2, int p[2], char *argv, char *const envp[]);
 
 #endif

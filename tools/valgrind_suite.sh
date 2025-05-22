@@ -9,7 +9,7 @@ for in_file in tests/input/*.in; do
 
     # build the command line as one string, then let *one* eval parse it
     cmd="$bin $(cat "$in_file")"
-    eval "valgrind --leak-check=full --show-leak-kinds=all \
+    eval "valgrind --leak-check=full \
           --track-origins=yes --error-exitcode=42 --trace-children=yes \
           --log-file=\"$log\" $cmd" || fail=1
 
