@@ -47,7 +47,7 @@ int	main(int argc, char **argv, char *const envp[])
 	int		statusCmd2;
 
 	if (argc != 5)
-		error_stderror("usage", "./pipex file1 cmd1 cmd2 file2",
+		error_fd2("usage", "./pipex file1 cmd1 cmd2 file2",
 			EXIT_FAILURE);
 	if (pipe(p) == -1)
 		exit (-1);

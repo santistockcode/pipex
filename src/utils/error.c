@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include "../../include/pipex.h"
 
-void	error_stderror(char *context, char *description, int exit_status)
+void	error_fd2(char *context, char *description, int exit_status)
 {
 	ft_putstr_fd("pipex: ", 2);
 	ft_putstr_fd(context, 2);
@@ -27,9 +27,14 @@ void	error_stderror(char *context, char *description, int exit_status)
 	exit(exit_status);
 }
 
-void xfatal(const char *ctx, int exit_code)
+void fatal_sys(const char *context, int exit_code)
 {
-    perror(ctx);
-    exit(exit_code);
+	error_fd2((char *) context, strerror(errno), exit_code);
 }
+
+// void xfatal(const char *ctx, int exit_code)
+// {
+//     perror(ctx);
+//     exit(exit_code);
+// }
 

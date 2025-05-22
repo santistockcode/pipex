@@ -23,6 +23,20 @@
 // if (access(path, X_OK) == 0) means existe
 // entonces devuelvo el path (por ejemplo /usr/bin/grep)
 
+
+void ft_split_free(char **paths)
+{
+	char **tmp;
+
+	tmp = paths;
+	while (*tmp)
+	{
+		free(*tmp);
+		tmp++;
+	}
+	free(paths);
+}
+
 char	*path_from_cmdname(char *arg, char *const envp[])
 {
 	char	**paths;
@@ -48,6 +62,7 @@ char	*path_from_cmdname(char *arg, char *const envp[])
 		free(path);
 		paths++;
 	}
+	// ft_split_free(paths); // check if passes tests
 	return (NULL);
 }
 

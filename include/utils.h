@@ -6,9 +6,13 @@
 char *path_from_cmdname(char *cmd, char *const envp[]);
 
 
-void	error_stderror(char *context, char *description, int exit_status);
+void	error_fd2(char *context, char *description, int exit_status);
 
-// wrapper for peror
-void xfatal(const char *ctx, int exit_code);
+// // wrapper for perror
+// void xfatal(const char *ctx, int exit_code);
+
+// wrapper using strerror
+void fatal_sys(const char *context, int exit_code);
+
 
 #endif
