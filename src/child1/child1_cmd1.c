@@ -6,7 +6,7 @@
 /*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 13:48:50 by saalarco          #+#    #+#             */
-/*   Updated: 2025/05/22 19:12:12 by saalarco         ###   ########.fr       */
+/*   Updated: 2025/05/23 19:21:25 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,12 +52,12 @@ void	child1_cmd1(char *file1, int p[2], char *argv, char *const envp[])
 	int	fd1;
 
 	open_infile1(file1, &fd1);
-	close(p[0]);
+	xclose(p[0]);
 	if (dup2(fd1, 0) == -1)
 		fatal_sys("dup2 failed", 1);
-	close(fd1);
+	xclose(fd1);
 	if (dup2(p[1], 1) == -1)
 		fatal_sys("dup2 failed", 1);
-	close(p[1]);
+	xclose(p[1]);
 	callexecve1(argv, envp);
 }

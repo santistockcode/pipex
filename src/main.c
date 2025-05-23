@@ -6,7 +6,7 @@
 /*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 13:15:37 by saalarco          #+#    #+#             */
-/*   Updated: 2025/05/22 19:10:31 by saalarco         ###   ########.fr       */
+/*   Updated: 2025/05/23 19:24:46 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,14 +50,14 @@ int	main(int argc, char **argv, char *const envp[])
 			EXIT_FAILURE);
 	if (pipe(p) == -1)
 		exit (-1);
-	pid1 = fork();
+	pid1 = xfork();
 	if (pid1 == 0)
 		child1_cmd1(argv[1], p, argv[2], envp);
-	pid2 = fork();
+	pid2 = xfork();
 	if (pid2 == 0)
 		child2_cmd2(argv[4], p, argv[3], envp);
-	close(p[0]);
-	close(p[1]);
+	xclose(p[0]);
+	xclose(p[1]);
 	waitpid(pid2, &status_cmd2, 0);
 	waitpid(pid1, NULL, 0);
 	if (WIFEXITED(status_cmd2))

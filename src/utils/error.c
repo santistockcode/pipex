@@ -6,7 +6,7 @@
 /*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/19 17:12:45 by saalarco          #+#    #+#             */
-/*   Updated: 2025/05/22 19:28:10 by saalarco         ###   ########.fr       */
+/*   Updated: 2025/05/23 19:30:03 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,6 @@
 
 void	custom_error_fd2(char *context, char **args, int exit_status)
 {
-	ft_putstr_fd("pipex: ", 2);
 	ft_putstr_fd(context, 2);
 	ft_putstr_fd(": command not found\n", 2);
 	ft_split_free(args);
@@ -41,8 +40,18 @@ void	fatal_sys(const char *context, int exit_code)
 	error_fd2((char *) context, strerror(errno), exit_code);
 }
 
-// void xfatal(const char *ctx, int exit_code)
-// {
-//     perror(ctx);
-//     exit(exit_code);
-// }
+void	xclose(int fd)
+{
+	if (close(fd) == -1)
+		fatal_sys("close", 1);
+}
+
+pid_t	xfork(void)
+{
+	pid_t	pid;
+
+	pid = fork();
+	if (pid == -1)
+		fatal_sys("fork", 1);
+	return (pid);
+}
