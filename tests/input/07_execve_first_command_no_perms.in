@@ -1,0 +1,1 @@
+infile "./mock-no-perms.sh" "wc" outfile
