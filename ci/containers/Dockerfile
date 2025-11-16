@@ -31,5 +31,10 @@ RUN echo 'export PS1="\[\e[38;5;42m\]\u@\h:\w$\[\e[0m\] "' >> /etc/bash.bashrc
 
 # --- user conveniences ------------------------------------------------------
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g ${GID} dev && useradd -m -u ${UID} -g ${GID} -s /bin/bash dev
+
 WORKDIR /workspace
 CMD ["bash"]
