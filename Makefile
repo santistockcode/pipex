@@ -6,7 +6,7 @@
 #    By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/11/04 17:50:16 by saalarco          #+#    #+#              #
-#    Updated: 2025/05/19 17:08:04 by saalarco         ###   ########.fr        #
+#    Updated: 2025/10/27 17:48:58 by saalarco         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -64,7 +64,8 @@ SRCS_PROD := src/main.c \
     src/child1/child1_cmd1.c \
     src/child2/child2_cmd2.c \
     src/utils/path_from_cmdname.c \
-	src/utils/error.c
+	src/utils/error.c \
+	src/utils/execve_failed.c
 
 OBJS_PROD := $(SRCS_PROD:.c=.o)
 

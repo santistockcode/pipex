@@ -1,1 +1,1 @@
-bash: ./mock-no-perms.sh: Permission denied
+pipex: ./mock-no-perms.sh: Permission denied

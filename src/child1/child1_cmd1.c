@@ -6,7 +6,7 @@
 /*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 13:48:50 by saalarco          #+#    #+#             */
-/*   Updated: 2025/05/26 16:59:45 by saalarco         ###   ########.fr       */
+/*   Updated: 2025/10/27 17:45:18 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void	callexecve1(char *argv, char *const envp[])
 		custom_error_fd2(args[0], args, 127);
 	}
 	if (execve(path, args, envp) == -1)
-		perror("execve failed");
+		execve_failed(path);
 	free(path);
 	ft_split_free(args);
 	exit(EXIT_FAILURE);

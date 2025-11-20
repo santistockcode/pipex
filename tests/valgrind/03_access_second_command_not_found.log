@@ -1,0 +1,37 @@
+==1461179== Memcheck, a memory error detector
+==1461179== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1461179== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==1461179== Command: /usr/bin/ls
+==1461179== Parent PID: 1461178
+==1461179== 
+==1461179== 
+==1461179== Process terminating with default action of signal 13 (SIGPIPE)
+==1461179==    at 0x49B28F7: write (write.c:26)
+==1461179==    by 0x4928EEC: _IO_file_write@@GLIBC_2.2.5 (fileops.c:1180)
+==1461179==    by 0x492A9E0: new_do_write (fileops.c:448)
+==1461179==    by 0x492A9E0: _IO_new_do_write (fileops.c:425)
+==1461179==    by 0x492A9E0: _IO_do_write@@GLIBC_2.2.5 (fileops.c:422)
+==1461179==    by ==1461178== 
+==1461178== HEAP SUMMARY:
+==1461178==     in use at exit: 0 bytes in 0 blocks
+==1461178==   total heap usage: 0 allocs, 0 frees, 0 bytes allocated
+==1461178== 
+==1461178== All heap blocks were freed -- no leaks are possible
+==1461178== 
+==1461178== For lists of detected and suppressed errors, rerun with: -s
+==1461178== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+=1461179== HEAP SUMMARY:
+==1461179==     in use at exit: 28,944 bytes in 52 blocks
+==1461179==   total heap usage: 59 allocs, 7 frees, 63,415 bytes allocated
+==1461179== 
+==1461179== LEAK SUMMARY:
+==1461179==    definitely lost: 0 bytes in 0 blocks
+==1461179==    indirectly lost: 0 bytes in 0 blocks
+==1461179==      possibly lost: 0 bytes in 0 blocks
+==1461179==    still reachable: 28,944 bytes in 52 blocks
+==1461179==         suppressed: 0 bytes in 0 blocks
+==1461179== Reachable blocks (those to which a pointer was found) are not shown.
+==1461179== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==1461179== 
+==1461179== For lists of detected and suppressed errors, rerun with: -s
+==1461179== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

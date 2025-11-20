@@ -1,1 +1,1 @@
-execve failed: Permission denied
+pipex: ./mock-no-perms.sh: Exec format error

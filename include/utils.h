@@ -6,7 +6,7 @@
 /*   By: saalarco <saalarco@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/22 19:23:31 by saalarco          #+#    #+#             */
-/*   Updated: 2025/05/23 19:29:00 by saalarco         ###   ########.fr       */
+/*   Updated: 2025/10/27 17:47:03 by saalarco         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,5 +28,8 @@ void	fatal_sys(const char *context, int exit_code);
 // wrapper for fork and close in case syscalls fails (raro)
 pid_t	xfork(void);
 void	xclose(int fd);
+
+// wrapper specific to execve
+void	execve_failed(const char *context);
 
 #endif
