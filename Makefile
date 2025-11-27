@@ -84,7 +84,7 @@ TEST_OUTPUT_DIR := tests/output
 ####
 
 .PHONY: all debug fsanitize valgrind coverage format lint doc \
-        test test_clean clean fclean re help
+	test test_clean e2e e2e-debug clean fclean re help
 
 all: $(NAME)
 
@@ -170,6 +170,18 @@ test_clean:
 	$(Q)rm -rf $(TEST_OUTPUT_DIR)
 
 ####
+# E2E TESTS (Python tox environment)
+####
+
+e2e: all
+	@echo "$(CYAN)[e2e]$(CLR_RMV) tox -e e2e"
+	$(Q)tox -e e2e
+
+e2e-debug: all
+	@echo "$(CYAN)[e2e-debug]$(CLR_RMV) PIPEX_DEBUG=1 tox -e e2e"
+	$(Q)PIPEX_DEBUG=1 tox -e e2e
+
+####
 # LINT/FORMAT/DOCS
 ####
 
@@ -191,6 +203,8 @@ doc:
 
 clean:
 	@echo "$(RED)[Cleaning objects]$(CLR_RMV)"
+	@echo "  e2e           – run Python end-to-end tests via tox"
+	@echo "  e2e-debug     – run e2e with PIPEX_DEBUG=1 (pdb breakpoint)"
 	$(Q)rm -rf $(OBJS_PROD)
 	$(Q)$(MAKE) -C $(LIBFT_DIR) clean
 

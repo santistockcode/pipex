@@ -1,6 +1,6 @@
-from asyncio import subprocess
 import os
-import pdb
+import subprocess
+from typing import List, Callable
 """
 End-to-end testing suite for pipex binary.
 This module provides a testing framework to validate the pipex program by comparing
@@ -22,19 +22,16 @@ The test framework:
 
 """
 
-
-
-class CasesSuite():
-    # register here every use case
+class CasesSuite:
     def __init__(self):
-        self.cases = []
-    
-    def add_case(self, case):
+        self.cases: List["CaseScenario"] = []
+
+    def add_case(self, case: "CaseScenario"):
         self.cases.append(case)
-    
-    def get_cases(self):
+
+    def get_cases(self) -> List["CaseScenario"]:
         return self.cases
-    
+
     def run_all(self):
         for case in self.cases:
             case.create_workspace()
@@ -45,10 +42,10 @@ class CasesSuite():
                 os.path.join(case.workspace, case.pipex_args[3])
             )
 
-class CaseScenario():
-    
-    def __init__(self, workspace, pipex_bin, pipex_args, bash_args, function_assert):
-        self.workspace = workspace
+class CaseScenario:
+    def __init__(self, workspace: str, pipex_bin: str, pipex_args: list, bash_args: list, function_assert: Callable[[str, str], None]):
+        # Normalize workspace to absolute path to avoid CWD-related issues
+        self.workspace = os.path.abspath(workspace)
         self.pipex_bin = pipex_bin
         self.pipex_args = pipex_args
         self.bash_args = bash_args
@@ -62,33 +59,40 @@ class CaseScenario():
         return self.workspace
 
     def better_call_pipex(self):
-        # use pipex to generate outfile_pipex
+        # Execute pipex to generate outfile_pipex
         cmd = [self.pipex_bin] + self.pipex_args
-        subprocess.run(cmd, cwd=self.workspace)
+        subprocess.run(cmd, cwd=self.workspace, check=False)
 
     def source_bash_script(self):
-        # use bash script to generate outfile_bash
-        with open(os.path.join(self.workspace, "sh_pipex.sh"), 'w') as f:
+        # Generate and execute bash pipeline to produce outfile_bash
+        script_path = os.path.join(self.workspace, "sh_pipex.sh")
+        script_path_abs = os.path.abspath(script_path)
+        with open(script_path_abs, 'w') as f:
             f.write("#!/bin/bash\n")
-            f.write(f"< {self.bash_args[0]} {self.bash_args[1]} | {self.bash_args[2]} > {self.bash_args[3]}\n")
-        os.chmod(os.path.join(self.workspace, "sh_pipex.sh"), 0o755)
+            infile_abs = os.path.abspath(os.path.join(self.workspace, self.bash_args[0]))
+            outfile_abs = os.path.abspath(os.path.join(self.workspace, self.bash_args[3]))
+            # Use absolute paths so running the script from any CWD works
+            f.write(f"< \"{infile_abs}\" {self.bash_args[1]} | {self.bash_args[2]} > \"{outfile_abs}\"\n")
+        os.chmod(script_path_abs, 0o755)
+        # Run using absolute path; no need to change cwd now
+        subprocess.run(["bash", script_path_abs], check=False)
 
 
 def main():
-    # Define path to pipex binary
-    pipex_bin = "../pipex"  # Adjust this path as needed
-    pdb.set_trace()
-    # check if pipex binary exists
+    # Assume we always run from repo root under tox or Makefile (fixed path)
+    pipex_bin = os.path.abspath("./pipex")
+    if os.environ.get("PIPEX_DEBUG") == "1":
+        import pdb; pdb.set_trace()
     if not os.path.exists(pipex_bin):
         raise FileNotFoundError(f"Pipex binary not found: {pipex_bin}")
 
     # init CasesSuite and CaseScenario
     cases_suite = CasesSuite()
     case1 = CaseScenario(
-        workspace="./e2e/case1_workspace",
+        workspace="./tests/e2e/case1_workspace",
         pipex_bin=pipex_bin,
-        pipex_args=["infile.txt", "ls", "wc", "outfile_pipex.txt"],
-        bash_args=["infile.txt", "ls", "wc", "outfile_bash.txt"],
+        pipex_args=["infile.txt", "cat", "wc", "outfile_pipex.txt"],
+        bash_args=["infile.txt", "cat", "wc", "outfile_bash.txt"],
         function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
     )
     # register case1 into cases_suite
