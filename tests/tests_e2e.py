@@ -1,39 +1,108 @@
+from asyncio import subprocess
 import os
+import pdb
+"""
+End-to-end testing suite for pipex binary.
+This module provides a testing framework to validate the pipex program by comparing
+its output against equivalent bash command pipelines. It creates test workspaces,
+executes both pipex and bash versions of commands, and verifies that outputs match.
+Classes:
+    CasesSuite: Manages and executes multiple test scenarios.
+    CaseScenario: Represents a single test case with workspace setup and execution.
+Functions:
+    main: Entry point that sets up and runs the test suite.
+    assert_files_equal: Compares content of two files to verify they match.
+Typical usage:
+    python tests_e2e.py
+The test framework:
+1. Creates isolated workspaces for each test case
+2. Generates input files and bash scripts
+3. Executes both pipex binary and equivalent bash commands
+4. Compares outputs to ensure correctness
+
+"""
+
+
 
 class CasesSuite():
     # register here every use case
+    def __init__(self):
+        self.cases = []
+    
+    def add_case(self, case):
+        self.cases.append(case)
+    
+    def get_cases(self):
+        return self.cases
+    
+    def run_all(self):
+        for case in self.cases:
+            case.create_workspace()
+            case.source_bash_script()
+            case.better_call_pipex()
+            case.function_assert(
+                os.path.join(case.workspace, case.bash_args[3]),
+                os.path.join(case.workspace, case.pipex_args[3])
+            )
 
 class CaseScenario():
     
-    def __init__(self, workspace, pipex_bin, pipex_args, function_assert):
+    def __init__(self, workspace, pipex_bin, pipex_args, bash_args, function_assert):
         self.workspace = workspace
         self.pipex_bin = pipex_bin
         self.pipex_args = pipex_args
+        self.bash_args = bash_args
         self.function_assert = function_assert
-    
-    def create_workspace():
-        # create a usable infile in the new workspace
 
-    def better_call_pipex():
+    
+    def create_workspace(self):
+        os.makedirs(self.workspace, exist_ok=True)
+        with open(os.path.join(self.workspace, "infile.txt"), 'w') as f:
+            f.write("input data for pipex")
+        return self.workspace
+
+    def better_call_pipex(self):
         # use pipex to generate outfile_pipex
+        cmd = [self.pipex_bin] + self.pipex_args
+        subprocess.run(cmd, cwd=self.workspace)
+
+    def source_bash_script(self):
+        # use bash script to generate outfile_bash
+        with open(os.path.join(self.workspace, "sh_pipex.sh"), 'w') as f:
+            f.write("#!/bin/bash\n")
+            f.write(f"< {self.bash_args[0]} {self.bash_args[1]} | {self.bash_args[2]} > {self.bash_args[3]}\n")
+        os.chmod(os.path.join(self.workspace, "sh_pipex.sh"), 0o755)
 
 
 def main():
+    # Define path to pipex binary
+    pipex_bin = "../pipex"  # Adjust this path as needed
+    pdb.set_trace()
     # check if pipex binary exists
-    
-    # check if mirror_bash_script exists (it accepts parameters)
+    if not os.path.exists(pipex_bin):
+        raise FileNotFoundError(f"Pipex binary not found: {pipex_bin}")
 
     # init CasesSuite and CaseScenario
+    cases_suite = CasesSuite()
+    case1 = CaseScenario(
+        workspace="./e2e/case1_workspace",
+        pipex_bin=pipex_bin,
+        pipex_args=["infile.txt", "ls", "wc", "outfile_pipex.txt"],
+        bash_args=["infile.txt", "ls", "wc", "outfile_bash.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    # register case1 into cases_suite
+    cases_suite.add_case(case1)
 
-    # create workspaces for each CaseScenario
+    # run all cases
+    cases_suite.run_all()
 
-    # cp bash script into each workspace 
-
-    # source bash script (to outfile_bash)
-
-    # better_call_pipex (to outfile_pipex)
-
-    # function assert outfile, or fd, or whatever 
+# function assert outfile, or fd, or whatever
+def assert_files_equal(outfile_bash, outfile_pipex):
+    with open(outfile_bash, 'r') as f_bash, open(outfile_pipex, 'r') as f_pipex:
+        bash_content = f_bash.read()
+        pipex_content = f_pipex.read()
+        assert bash_content == pipex_content, "Outputs do not match!"
 
 if __name__ == "__main__":
     main()
