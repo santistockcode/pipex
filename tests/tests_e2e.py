@@ -56,6 +56,9 @@ class CaseScenario:
         os.makedirs(self.workspace, exist_ok=True)
         with open(os.path.join(self.workspace, "infile.txt"), 'w') as f:
             f.write("input data for pipex")
+        # Also create a generic 'input' file used by additional e2e cases
+        with open(os.path.join(self.workspace, "input"), 'w') as f:
+            f.write("hello world\nline two\nHELLO again\nfinal line\n")
         return self.workspace
 
     def better_call_pipex(self):
@@ -86,10 +89,10 @@ def main():
     if not os.path.exists(pipex_bin):
         raise FileNotFoundError(f"Pipex binary not found: {pipex_bin}")
 
-    # init CasesSuite and CaseScenario
+    # Case 1: cat wc
     cases_suite = CasesSuite()
     case1 = CaseScenario(
-        workspace="./tests/e2e/case1_workspace",
+        workspace="./tests/e2e/case_cat_wc",
         pipex_bin=pipex_bin,
         pipex_args=["infile.txt", "cat", "wc", "outfile_pipex.txt"],
         bash_args=["infile.txt", "cat", "wc", "outfile_bash.txt"],
@@ -97,6 +100,46 @@ def main():
     )
     # register case1 into cases_suite
     cases_suite.add_case(case1)
+
+    # Case 2: < input ls | ls > output
+    case_ls_ls = CaseScenario(
+        workspace="./tests/e2e/case_ls_ls",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "ls", "ls", "output_pipex.txt"],
+        bash_args=["input", "ls", "ls", "output_bash.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    cases_suite.add_case(case_ls_ls)
+
+    # Case 3: < input grep hello | wc > output
+    case_grep_wc = CaseScenario(
+        workspace="./tests/e2e/case_grep_wc",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "grep hello", "wc", "output_pipex.txt"],
+        bash_args=["input", "grep hello", "wc", "output_bash.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    cases_suite.add_case(case_grep_wc)
+
+    # Case 4: < input grep hello | sleep 3 > output (sleep produces no output; both should be empty files)
+    case_grep_sleep = CaseScenario(
+        workspace="./tests/e2e/case_grep_sleep",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "grep hello", "sleep 3", "output_pipex.txt"],
+        bash_args=["input", "grep hello", "sleep 3", "output_bash.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    cases_suite.add_case(case_grep_sleep)
+
+    # Case 5: < input sleep 3 | ls > output (sleep produces nothing; ls lists cwd)
+    case_sleep_ls = CaseScenario(
+        workspace="./tests/e2e/case_sleep_ls",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "sleep 3", "ls", "output_pipex.txt"],
+        bash_args=["input", "sleep 3", "ls", "output_bash.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    cases_suite.add_case(case_sleep_ls)
 
     # run all cases
     cases_suite.run_all()
