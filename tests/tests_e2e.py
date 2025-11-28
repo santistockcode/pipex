@@ -38,14 +38,16 @@ class CasesSuite:
             case.source_bash_script()
             case.better_call_pipex()
             case.function_assert(
-                os.path.join(case.workspace, case.bash_args[3]),
-                os.path.join(case.workspace, case.pipex_args[3])
+                os.path.join(case.workspace_bash, case.bash_args[3]),
+                os.path.join(case.workspace_pipex, case.pipex_args[3])
             )
 
 class CaseScenario:
     def __init__(self, workspace: str, pipex_bin: str, pipex_args: list, bash_args: list, function_assert: Callable[[str, str], None]):
         # Normalize workspace to absolute path to avoid CWD-related issues
         self.workspace = os.path.abspath(workspace)
+        self.workspace_bash = os.path.join(self.workspace, "bash")
+        self.workspace_pipex = os.path.join(self.workspace, "pipex")
         self.pipex_bin = pipex_bin
         self.pipex_args = pipex_args
         self.bash_args = bash_args
@@ -53,31 +55,41 @@ class CaseScenario:
 
     
     def create_workspace(self):
-        os.makedirs(self.workspace, exist_ok=True)
-        with open(os.path.join(self.workspace, "infile.txt"), 'w') as f:
+        # Create isolated subfolders to avoid cross-artifacts between bash and pipex runs
+        os.makedirs(self.workspace_bash, exist_ok=True)
+        os.makedirs(self.workspace_pipex, exist_ok=True)
+        # Common test inputs replicated to both environments
+        with open(os.path.join(self.workspace_bash, "infile.txt"), 'w') as f:
             f.write("input data for pipex")
-        # Also create a generic 'input' file used by additional e2e cases
-        with open(os.path.join(self.workspace, "input"), 'w') as f:
+        with open(os.path.join(self.workspace_pipex, "infile.txt"), 'w') as f:
+            f.write("input data for pipex")
+        # Generic 'input' file used by additional e2e cases
+        with open(os.path.join(self.workspace_bash, "input"), 'w') as f:
+            f.write("hello world\nline two\nHELLO again\nfinal line\n")
+        with open(os.path.join(self.workspace_pipex, "input"), 'w') as f:
             f.write("hello world\nline two\nHELLO again\nfinal line\n")
         return self.workspace
 
     def better_call_pipex(self):
         # Execute pipex to generate outfile_pipex
         cmd = [self.pipex_bin] + self.pipex_args
-        subprocess.run(cmd, cwd=self.workspace, check=False)
+        subprocess.run(cmd, cwd=self.workspace_pipex, check=False)
 
     def source_bash_script(self):
         # Generate and execute bash pipeline to produce outfile_bash
+        # Create script at case level, then cd into bash/ during execution
         script_path = os.path.join(self.workspace, "sh_pipex.sh")
         script_path_abs = os.path.abspath(script_path)
         with open(script_path_abs, 'w') as f:
             f.write("#!/bin/bash\n")
-            infile_abs = os.path.abspath(os.path.join(self.workspace, self.bash_args[0]))
-            outfile_abs = os.path.abspath(os.path.join(self.workspace, self.bash_args[3]))
+            # Ensure the bash script runs inside bash/ subfolder
+            f.write(f"cd \"{self.workspace_bash}\"\n")
+            infile_abs = os.path.abspath(os.path.join(self.workspace_bash, self.bash_args[0]))
+            outfile_abs = os.path.abspath(os.path.join(self.workspace_bash, self.bash_args[3]))
             # Use absolute paths so running the script from any CWD works
             f.write(f"< \"{infile_abs}\" {self.bash_args[1]} | {self.bash_args[2]} > \"{outfile_abs}\"\n")
         os.chmod(script_path_abs, 0o755)
-        # Run using absolute path; no need to change cwd now
+        # Run using absolute path; script itself cd's into bash/
         subprocess.run(["bash", script_path_abs], check=False)
 
 
@@ -94,8 +106,8 @@ def main():
     case1 = CaseScenario(
         workspace="./tests/e2e/case_cat_wc",
         pipex_bin=pipex_bin,
-        pipex_args=["infile.txt", "cat", "wc", "outfile_pipex.txt"],
-        bash_args=["infile.txt", "cat", "wc", "outfile_bash.txt"],
+        pipex_args=["infile.txt", "cat", "wc", "outfile.txt"],
+        bash_args=["infile.txt", "cat", "wc", "outfile.txt"],
         function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
     )
     # register case1 into cases_suite
@@ -105,8 +117,8 @@ def main():
     case_ls_ls = CaseScenario(
         workspace="./tests/e2e/case_ls_ls",
         pipex_bin=pipex_bin,
-        pipex_args=["input", "ls", "ls", "output_pipex.txt"],
-        bash_args=["input", "ls", "ls", "output_bash.txt"],
+        pipex_args=["input", "ls", "ls", "output.txt"],
+        bash_args=["input", "ls", "ls", "output.txt"],
         function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
     )
     cases_suite.add_case(case_ls_ls)
@@ -115,8 +127,8 @@ def main():
     case_grep_wc = CaseScenario(
         workspace="./tests/e2e/case_grep_wc",
         pipex_bin=pipex_bin,
-        pipex_args=["input", "grep hello", "wc", "output_pipex.txt"],
-        bash_args=["input", "grep hello", "wc", "output_bash.txt"],
+        pipex_args=["input", "grep hello", "wc", "output.txt"],
+        bash_args=["input", "grep hello", "wc", "output.txt"],
         function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
     )
     cases_suite.add_case(case_grep_wc)
@@ -125,8 +137,8 @@ def main():
     case_grep_sleep = CaseScenario(
         workspace="./tests/e2e/case_grep_sleep",
         pipex_bin=pipex_bin,
-        pipex_args=["input", "grep hello", "sleep 3", "output_pipex.txt"],
-        bash_args=["input", "grep hello", "sleep 3", "output_bash.txt"],
+        pipex_args=["input", "grep hello", "sleep 3", "output.txt"],
+        bash_args=["input", "grep hello", "sleep 3", "output.txt"],
         function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
     )
     cases_suite.add_case(case_grep_sleep)
@@ -135,11 +147,31 @@ def main():
     case_sleep_ls = CaseScenario(
         workspace="./tests/e2e/case_sleep_ls",
         pipex_bin=pipex_bin,
-        pipex_args=["input", "sleep 3", "ls", "output_pipex.txt"],
-        bash_args=["input", "sleep 3", "ls", "output_bash.txt"],
+        pipex_args=["input", "sleep 3", "ls", "output.txt"],
+        bash_args=["input", "sleep 3", "ls", "output.txt"],
         function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
     )
     cases_suite.add_case(case_sleep_ls)
+
+    # Case 6: < input ls | foo > outfile (foo is invalid command; both should produce empty outfile)
+    case_ls_foo = CaseScenario(
+        workspace="./tests/e2e/case_ls_foo",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "ls", "foo", "output.txt"],
+        bash_args=["input", "ls", "foo", "output.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    cases_suite.add_case(case_ls_foo)
+
+    # Case 7: < input foo | ls > outfile (foo is invalid command; both should produce empty outfile)
+    case_foo_ls = CaseScenario(
+        workspace="./tests/e2e/case_foo_ls",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "foo", "ls", "output.txt"],
+        bash_args=["input", "foo", "ls", "output.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    cases_suite.add_case(case_foo_ls)
 
     # run all cases
     cases_suite.run_all()
