@@ -48,6 +48,11 @@ class CasesSuite:
             pipex_out = os.path.join(case.workspace_pipex, case.pipex_args[3])
             logger.debug("[Case %d] Comparing bash=%s pipex=%s", idx, bash_out, pipex_out)
             case.function_assert(bash_out, pipex_out)
+            # Also compare exit status codes
+            bash_status = os.path.join(case.workspace_bash, "status.txt")
+            pipex_status = os.path.join(case.workspace_pipex, "status.txt")
+            logger.debug("[Case %d] Comparing status bash=%s pipex=%s", idx, bash_status, pipex_status)
+            assert_status_equal(bash_status, pipex_status)
             logger.info("[Case %d] SUCCESS", idx)
 
 class CaseScenario:
@@ -87,6 +92,12 @@ class CaseScenario:
         logger.debug("[pipex] Exit code: %d", result.returncode)
         if result.stderr:
             logger.warning("[pipex] stderr: %s", result.stderr.strip())
+        # Persist exit status code for later comparison
+        try:
+            with open(os.path.join(self.workspace_pipex, "status.txt"), "w") as f:
+                f.write(str(result.returncode))
+        except OSError as e:
+            logger.error("[pipex] Failed writing status.txt: %s", e)
 
     def source_bash_script(self):
         # Generate and execute bash pipeline to produce outfile_bash
@@ -101,6 +112,8 @@ class CaseScenario:
             outfile_abs = os.path.abspath(os.path.join(self.workspace_bash, self.bash_args[3]))
             # Use absolute paths so running the script from any CWD works
             f.write(f"< \"{infile_abs}\" {self.bash_args[1]} | {self.bash_args[2]} > \"{outfile_abs}\"\n")
+            # Persist bash pipeline exit status
+            f.write("echo $? > status.txt\n")
         os.chmod(script_path_abs, 0o755)
         logger = logging.getLogger(__name__)
         logger.debug("[bash] Script created: %s", script_path_abs)
@@ -289,6 +302,22 @@ def assert_files_have_something(outfile_bash, outfile_pipex):
         if not bash_content or not pipex_content:
             logging.error("One or both files are empty. bash_len=%d pipex_len=%d", len(bash_content), len(pipex_content))
             raise AssertionError("One or both output files are empty!")
+
+def assert_status_equal(status_bash_path: str, status_pipex_path: str):
+    with open(status_bash_path, 'r') as f_bash, open(status_pipex_path, 'r') as f_pipex:
+        try:
+            bash_status = int(f_bash.read().strip())
+        except ValueError:
+            logging.error("Invalid bash status content in %s", status_bash_path)
+            raise
+        try:
+            pipex_status = int(f_pipex.read().strip())
+        except ValueError:
+            logging.error("Invalid pipex status content in %s", status_pipex_path)
+            raise
+        if bash_status != pipex_status:
+            logging.error("Exit status mismatch. bash=%d pipex=%d", bash_status, pipex_status)
+            raise AssertionError("Exit statuses do not match!")
 
 if __name__ == "__main__":
     main()
