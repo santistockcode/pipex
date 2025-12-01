@@ -44,8 +44,9 @@ class CasesSuite:
             logger.debug("[Case %d] Bash pipeline executed", idx)
             case.better_call_pipex()
             logger.debug("[Case %d] Pipex pipeline executed", idx)
-            bash_out = os.path.join(case.workspace_bash, case.bash_args[3])
-            pipex_out = os.path.join(case.workspace_pipex, case.pipex_args[3])
+            # Outfile is the last element of args list for both harnesses
+            bash_out = os.path.join(case.workspace_bash, case.bash_args[-1])
+            pipex_out = os.path.join(case.workspace_pipex, case.pipex_args[-1])
             logger.debug("[Case %d] Comparing bash=%s pipex=%s", idx, bash_out, pipex_out)
             case.function_assert(bash_out, pipex_out)
             # Also compare exit status codes
@@ -81,6 +82,16 @@ class CaseScenario:
             f.write("hello world\nline two\nHELLO again\nfinal line\n")
         with open(os.path.join(self.workspace_pipex, "input"), 'w') as f:
             f.write("hello world\nline two\nHELLO again\nfinal line\n")
+        # Create a file that exists but is not executable to trigger 126
+        noexec_bash = os.path.join(self.workspace_bash, "noexec.sh")
+        noexec_pipex = os.path.join(self.workspace_pipex, "noexec.sh")
+        with open(noexec_bash, 'w') as f:
+            f.write("#!/bin/sh\necho should-not-run\n")
+        with open(noexec_pipex, 'w') as f:
+            f.write("#!/bin/sh\necho should-not-run\n")
+        # Remove all permissions to ensure execve fails with EACCES
+        os.chmod(noexec_bash, 0)
+        os.chmod(noexec_pipex, 0)
         return self.workspace
 
     def better_call_pipex(self):
@@ -100,25 +111,37 @@ class CaseScenario:
             logger.error("[pipex] Failed writing status.txt: %s", e)
 
     def source_bash_script(self):
-        # Generate and execute bash pipeline to produce outfile_bash
-        # Create script at case level, then cd into bash/ during execution
+        """Create and execute a bash script that mirrors the dynamic pipeline.
+        Format: < infile cmd1 | cmd2 | ... | cmdN > outfile
+        Where bash_args: [infile, cmd1, cmd2, ..., cmdN, outfile]
+        """
         script_path = os.path.join(self.workspace, "sh_pipex.sh")
         script_path_abs = os.path.abspath(script_path)
+        infile = self.bash_args[0]
+        outfile = self.bash_args[-1]
+        commands = self.bash_args[1:-1]
         with open(script_path_abs, 'w') as f:
             f.write("#!/bin/bash\n")
-            # Ensure the bash script runs inside bash/ subfolder
             f.write(f"cd \"{self.workspace_bash}\"\n")
-            infile_abs = os.path.abspath(os.path.join(self.workspace_bash, self.bash_args[0]))
-            outfile_abs = os.path.abspath(os.path.join(self.workspace_bash, self.bash_args[3]))
-            # Use absolute paths so running the script from any CWD works
-            f.write(f"< \"{infile_abs}\" {self.bash_args[1]} | {self.bash_args[2]} > \"{outfile_abs}\"\n")
-            # Persist bash pipeline exit status
+            infile_abs = os.path.abspath(os.path.join(self.workspace_bash, infile))
+            outfile_abs = os.path.abspath(os.path.join(self.workspace_bash, outfile))
+            pipeline = " | ".join(commands)
+            f.write(f"< \"{infile_abs}\" {pipeline} > \"{outfile_abs}\"\n")
             f.write("echo $? > status.txt\n")
         os.chmod(script_path_abs, 0o755)
         logger = logging.getLogger(__name__)
         logger.debug("[bash] Script created: %s", script_path_abs)
         result = subprocess.run(["bash", script_path_abs], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-        logger.debug("[bash] Exit code: %d", result.returncode)
+        
+        # Read and log the actual pipeline exit status from status.txt
+        status_file = os.path.join(self.workspace_bash, "status.txt")
+        try:
+            with open(status_file, 'r') as f:
+                actual_exit_code = int(f.read().strip())
+            logger.debug("[bash] Exit code: %d", actual_exit_code)
+        except (OSError, ValueError) as e:
+            logger.error("[bash] Failed to read status from %s: %s", status_file, e)
+            logger.debug("[bash] Script exit code: %d", result.returncode)
         if result.stderr:
             logger.warning("[bash] stderr: %s", result.stderr.strip())
 
@@ -279,6 +302,78 @@ def main():
         function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
     )
     cases_suite.add_case(case_foo_foo_ls)
+
+    # Case 15 (status 127): invalid command should yield 127 for the stage but last command controls final status
+    # We still verify exit status equality captured in status.txt; both pipelines should align.
+    case_status_127 = CaseScenario(
+        workspace="./tests/e2e/case_status_127",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "foo", "sleep 1", "output.txt"],
+        bash_args=["input", "foo", "sleep 1", "output.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    cases_suite.add_case(case_status_127)
+
+    # Case 16 (status 126): existing but non-executable file used as command
+    case_status_126 = CaseScenario(
+        workspace="./tests/e2e/case_status_126",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "./noexec.sh", "sleep 1", "output.txt"],
+        bash_args=["input", "./noexec.sh", "sleep 1", "output.txt"],
+        function_assert=lambda outfile_bash, outfile_pipex: assert_files_equal(outfile_bash, outfile_pipex)
+    )
+    cases_suite.add_case(case_status_126)
+
+    # --- New multi-pipe cases (3-5 commands) ---
+    # Case 17: 3 commands: cat | grep hello | wc -l
+    case_cat_grep_wc = CaseScenario(
+        workspace="./tests/e2e/case_cat_grep_wc",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "cat", "grep hello", "wc -l", "output.txt"],
+        bash_args=["input", "cat", "grep hello", "wc -l", "output.txt"],
+        function_assert=lambda b, p: assert_files_equal(b, p)
+    )
+    cases_suite.add_case(case_cat_grep_wc)
+
+    # Case 18: 4 commands: grep hello | tr h H | wc -c | cat
+    case_grep_tr_wc_cat = CaseScenario(
+        workspace="./tests/e2e/case_grep_tr_wc_cat",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "grep hello", "tr h H", "wc -c", "cat", "output.txt"],
+        bash_args=["input", "grep hello", "tr h H", "wc -c", "cat", "output.txt"],
+        function_assert=lambda b, p: assert_files_equal(b, p)
+    )
+    cases_suite.add_case(case_grep_tr_wc_cat)
+
+    # Case 19: 4 commands: cat | grep line | grep final | wc -l
+    case_cat_grep_chain_wc = CaseScenario(
+        workspace="./tests/e2e/case_cat_grep_chain_wc",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "cat", "grep line", "grep final", "wc -l", "output.txt"],
+        bash_args=["input", "cat", "grep line", "grep final", "wc -l", "output.txt"],
+        function_assert=lambda b, p: assert_files_equal(b, p)
+    )
+    cases_suite.add_case(case_cat_grep_chain_wc)
+
+    # Case 20: 4 commands: cat | sort | uniq | wc -l
+    case_cat_sort_uniq_wc = CaseScenario(
+        workspace="./tests/e2e/case_cat_sort_uniq_wc",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "cat", "sort", "uniq", "wc -l", "output.txt"],
+        bash_args=["input", "cat", "sort", "uniq", "wc -l", "output.txt"],
+        function_assert=lambda b, p: assert_files_equal(b, p)
+    )
+    cases_suite.add_case(case_cat_sort_uniq_wc)
+
+    # Case 21: 5 commands: cat | head | wc -l | cat | wc -c
+    case_cat_head_wc_cat_wc = CaseScenario(
+        workspace="./tests/e2e/case_cat_head_wc_cat_wc",
+        pipex_bin=pipex_bin,
+        pipex_args=["input", "cat", "head", "wc -l", "cat", "wc -c", "output.txt"],
+        bash_args=["input", "cat", "head", "wc -l", "cat", "wc -c", "output.txt"],
+        function_assert=lambda b, p: assert_files_equal(b, p)
+    )
+    cases_suite.add_case(case_cat_head_wc_cat_wc)
 
     # run all cases
     cases_suite.run_all()

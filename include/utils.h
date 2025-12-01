@@ -15,18 +15,26 @@
 
 # include <unistd.h>
 
+
 // where cmd is the name of the program"ls"
 // Caller is responsible for freeing the returned string
 char	*path_from_cmdname(char *cmd, char *const envp[]);
 void	ft_split_free(char **paths);
 
 void	error_fd2(char *context, char *description, int exit_status);
-void	custom_error_fd2(char *context, char **args, int exit_status);
+void	pipex_exit_cmd_not_found(char *context, char **args, int exit_status);
 
 // wrapper using strerror
 void	fatal_sys(const char *context, int exit_code);
 // wrapper for fork and close in case syscalls fails (raro)
 pid_t	xfork(void);
-void	xclose(int fd);
+
+// Non-fatal close that ignores invalid fds and errors
+void	safe_close(int fd);
+
+// Centralized execve failure handling: prints, frees and exits with 126/127
+void    pipex_handle_execve_error(char **args, char *resolved_path,
+													const char *context);
+
 
 #endif

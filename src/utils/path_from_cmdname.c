@@ -74,9 +74,3 @@ char	*path_from_cmdname(char *arg, char *const envp[])
 	ft_split_free(paths_start);
 	return (NULL);
 }
-
-// void	error(void)
-// {
-// 	ft_printf("error manual");
-// 	exit(EXIT_FAILURE);
-// }

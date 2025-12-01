@@ -52,12 +52,12 @@ void	child1_cmd1(char *file1, int p[2], char *argv, char *const envp[])
 	int	fd1;
 
 	open_infile1(file1, &fd1);
-	xclose(p[0]);
+	safe_close(p[0]);
 	if (dup2(fd1, 0) == -1)
 		fatal_sys("dup2 failed", 1);
-	xclose(fd1);
+	safe_close(fd1);
 	if (dup2(p[1], 1) == -1)
 		fatal_sys("dup2 failed", 1);
-	xclose(p[1]);
+	safe_close(p[1]);
 	callexecve1(argv, envp);
 }

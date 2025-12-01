@@ -61,10 +61,11 @@ BPURPLE   := \033[1;35m
 ####
 
 SRCS_PROD := src/main.c \
-    src/child1/child1_cmd1.c \
-    src/child2/child2_cmd2.c \
     src/utils/path_from_cmdname.c \
-	src/utils/error.c
+	src/utils/error.c \
+	src/context/ctx.c \
+	src/exec/command_exec.c \
+	src/pipeline/pipeline_builder.c
 
 OBJS_PROD := $(SRCS_PROD:.c=.o)
 
@@ -89,7 +90,7 @@ TEST_OUTPUT_DIR := tests/output
 all: $(NAME)
 
 # -O0 for debugging (disables optimization wich mmkes debugging easier)
-debug: CFLAGS += -g3 -O0
+debug: CFLAGS += -g3 -O0 -DDEBUG
 debug: $(NAME)
 
 # instant valgrind, UndefinedBehaviorSanitizer (UBSan) and AddressSanitizer (ASan)	
