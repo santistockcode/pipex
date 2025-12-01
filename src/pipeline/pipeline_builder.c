@@ -18,12 +18,12 @@ static int open_infile_fd(const char *infile)
 {
     int fd;
 
-    fd = open(infile, O_RDONLY);
+    fd = open_wrap(infile, O_RDONLY, 0);
     if (fd == -1)
     {
         // Mimic bash: report error but continue pipeline; feed /dev/null
         perror(infile);
-        fd = open("/dev/null", O_RDONLY);
+        fd = open_wrap("/dev/null", O_RDONLY, 0);
         if (fd == -1)
             fatal_sys("/dev/null", 1);
     }
@@ -34,7 +34,7 @@ static int open_outfile_fd(const char *outfile)
 {
     int fd;
 
-    fd = open(outfile, O_TRUNC | O_CREAT | O_RDWR, 0000644);
+    fd = open_wrap(outfile, O_TRUNC | O_CREAT | O_RDWR, 0000644);
     if (fd == -1)
         fatal_sys((char *)outfile, 1);
     return fd;
@@ -45,6 +45,10 @@ static void spawn_mid_command(int in_fd, int p_read, int p_write, const char *cm
     pid_t pid;
 
     pid = fork_wrap();
+    if (pid < 0)
+    {
+        fatal_sys("fork", 1);
+    }
     if (pid == 0)
     {
         if (dup2_wrap(in_fd, 0) == -1)
@@ -68,6 +72,10 @@ static int spawn_last_command(int in_fd, const char *outfile, const char *cmd, c
 
     out_fd = open_outfile_fd(outfile);
     pid = fork_wrap();
+    if (pid < 0)
+    {
+        fatal_sys("fork", 1);
+    }
     if (pid == 0)
     {
         if (dup2_wrap(in_fd, 0) == -1)

@@ -11,10 +11,11 @@
 /* ************************************************************************** */
 
 #include "../../include/pipex.h"
+#include "../../include/syswrap.h"
 
 static void	open_infile1(char *filename, int *file1)
 {
-	*file1 = open(filename, O_RDONLY);
+	*file1 = open_wrap(filename, O_RDONLY, 0);
 	if (*file1 == -1)
 		fatal_sys(filename, 1);
 }
