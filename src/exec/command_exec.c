@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../../include/pipex.h"
+#include "../../include/syswrap.h"
 #include <errno.h>
 
 char **pipex_split_args(const char *cmd)
@@ -47,7 +48,7 @@ void pipex_exec_cmd(const char *cmd, char *const envp[])
     path = pipex_resolve_path(args, envp);
     if (path == NULL)
         pipex_exit_cmd_not_found(args[0], args, 127);
-    if (execve(path, args, envp) == -1)
+    if (execve_wrap(path, args, envp) == -1)
         pipex_handle_execve_error(args, path, "execve");
     // Not reached if execve succeeds
     free(path);

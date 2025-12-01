@@ -12,6 +12,7 @@
 
 #include "../../include/pipex.h"
 #include "../../include/log.h"
+#include "../../include/syswrap.h"
 
 static int open_infile_fd(const char *infile)
 {
@@ -43,13 +44,13 @@ static void spawn_mid_command(int in_fd, int p_read, int p_write, const char *cm
 {
     pid_t pid;
 
-    pid = xfork();
+    pid = fork_wrap();
     if (pid == 0)
     {
-        if (dup2(in_fd, 0) == -1)
+        if (dup2_wrap(in_fd, 0) == -1)
             fatal_sys("dup2 in_fd", 1);
         safe_close(in_fd);
-        if (dup2(p_write, 1) == -1)
+        if (dup2_wrap(p_write, 1) == -1)
             fatal_sys("dup2 p_write", 1);
         safe_close(p_read);
         safe_close(p_write);
@@ -66,13 +67,13 @@ static int spawn_last_command(int in_fd, const char *outfile, const char *cmd, c
     int status;
 
     out_fd = open_outfile_fd(outfile);
-    pid = xfork();
+    pid = fork_wrap();
     if (pid == 0)
     {
-        if (dup2(in_fd, 0) == -1)
+        if (dup2_wrap(in_fd, 0) == -1)
             fatal_sys("dup2 in_fd", 1);
         safe_close(in_fd);
-        if (dup2(out_fd, 1) == -1)
+        if (dup2_wrap(out_fd, 1) == -1)
             fatal_sys("dup2 out_fd", 1);
         safe_close(out_fd);
         pipex_exec_cmd(cmd, envp);
@@ -97,7 +98,7 @@ int pipex_run_pipeline(t_pipex_ctx *ctx)
     i = 0;
     while (i < ctx->cmd_count - 1)
     {
-        if (pipe(p) == -1)
+        if (pipe_wrap(p) == -1)
             fatal_ctx("pipe", ctx, 1);
         PIPEX_LOG("pipe created p[0]=%d p[1]=%d for cmd[%d]", p[0], p[1], i);
         spawn_mid_command(in_fd, p[0], p[1], ctx->commands[i], ctx->envp);

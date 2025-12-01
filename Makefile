@@ -65,7 +65,8 @@ SRCS_PROD := src/main.c \
 	src/utils/error.c \
 	src/context/ctx.c \
 	src/exec/command_exec.c \
-	src/pipeline/pipeline_builder.c
+	src/pipeline/pipeline_builder.c \
+	src/utils/syswrap.c
 
 OBJS_PROD := $(SRCS_PROD:.c=.o)
 
