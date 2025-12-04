@@ -14,30 +14,34 @@
 #include "../../include/log.h"
 #include "../../include/syswrap.h"
 
-static int open_infile_fd(const char *infile)
+static void spawn_first_command(const char *infile, int p_read, int p_write, const char *cmd, char *const envp[])
 {
+    pid_t pid;
     int fd;
 
-    fd = open_wrap(infile, O_RDONLY, 0);
-    if (fd == -1)
+    pid = fork_wrap();
+    if (pid < 0)
     {
-        // Mimic bash: report error but continue pipeline; feed /dev/null
-        perror(infile);
-        fd = open_wrap("/dev/null", O_RDONLY, 0);
-        if (fd == -1)
-            fatal_sys("/dev/null", 1);
+        fatal_sys("fork", 1);
     }
-    return fd;
-}
-
-static int open_outfile_fd(const char *outfile)
-{
-    int fd;
-
-    fd = open_wrap(outfile, O_TRUNC | O_CREAT | O_RDWR, 0000644);
-    if (fd == -1)
-        fatal_sys((char *)outfile, 1);
-    return fd;
+    if (pid == 0)
+    {
+        fd = open_wrap(infile, O_RDONLY, 0);
+        if (fd == -1)
+        {
+            perror(infile);
+            exit(1);
+        }
+        if (dup2_wrap(fd, STDIN_FILENO) == -1)
+            fatal_sys("dup2 infile", 1);
+        safe_close(fd);
+        if (dup2_wrap(p_write, STDOUT_FILENO) == -1)
+            fatal_sys("dup2 p_write", 1);
+        safe_close(p_read);
+        safe_close(p_write);
+        pipex_exec_cmd(cmd, envp);
+    }
+    safe_close(p_write);
 }
 
 static void spawn_mid_command(int in_fd, int p_read, int p_write, const char *cmd, char *const envp[])
@@ -70,7 +74,6 @@ static int spawn_last_command(int in_fd, const char *outfile, const char *cmd, c
     int out_fd;
     int status;
 
-    out_fd = open_outfile_fd(outfile);
     pid = fork_wrap();
     if (pid < 0)
     {
@@ -78,6 +81,12 @@ static int spawn_last_command(int in_fd, const char *outfile, const char *cmd, c
     }
     if (pid == 0)
     {
+        out_fd = open_wrap(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (out_fd == -1)
+        {
+            perror(outfile);
+            exit(1);
+        }
         if (dup2_wrap(in_fd, 0) == -1)
             fatal_sys("dup2 in_fd", 1);
         safe_close(in_fd);
@@ -87,7 +96,6 @@ static int spawn_last_command(int in_fd, const char *outfile, const char *cmd, c
         pipex_exec_cmd(cmd, envp);
     }
     safe_close(in_fd);
-    safe_close(out_fd);
     waitpid(pid, &status, 0);
     if (WIFEXITED(status))
         return WEXITSTATUS(status);
@@ -101,9 +109,19 @@ int pipex_run_pipeline(t_pipex_ctx *ctx)
     int i;
     int status;
 
-    in_fd = open_infile_fd(ctx->infile);
-    PIPEX_LOG("infile fd=%d", in_fd);
-    i = 0;
+    if (ctx->cmd_count == 0)
+        return 1;
+    
+    /* First command: reads from infile */
+    if (pipe_wrap(p) == -1)
+        fatal_ctx("pipe", ctx, 1);
+    PIPEX_LOG("pipe created p[0]=%d p[1]=%d for cmd[0]", p[0], p[1]);
+    spawn_first_command(ctx->infile, p[0], p[1], ctx->commands[0], ctx->envp);
+    PIPEX_LOG("spawned first command: %s", ctx->commands[0]);
+    in_fd = p[0];
+    
+    /* Middle commands */
+    i = 1;
     while (i < ctx->cmd_count - 1)
     {
         if (pipe_wrap(p) == -1)
@@ -114,6 +132,8 @@ int pipex_run_pipeline(t_pipex_ctx *ctx)
         in_fd = p[0];
         i++;
     }
+    
+    /* Last command: writes to outfile */
     status = spawn_last_command(in_fd, ctx->outfile, ctx->commands[ctx->cmd_count - 1], ctx->envp);
     PIPEX_LOG("last command: %s -> outfile=%s, status=%d", ctx->commands[ctx->cmd_count - 1], ctx->outfile, status);
     return status;

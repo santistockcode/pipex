@@ -36,3 +36,30 @@ dev@73d0c30eceaf:/workspace$ ./pipex infile wc ls outfile
 ls: write error: Bad file descriptor
 dev@73d0c30eceaf:/workspace$ ./pipex infile wc ls outfile >&2
 ```
+
+## Test that on open fail cmd does not run
+
+1. create a command that announces itself
+echo 'echo "I WAS RUN" >> /tmp/cmd_log' > /tmp/mycmd.sh
+chmod +x /tmp/mycmd.sh
+
+2. make sure log is clean
+rm -f /tmp/cmd_log
+
+3. case 1: missing infile, with pipeline
+./tmp/mycmd.sh < no_such_file | wc -l
+
+4. check log
+cat /tmp/cmd_log
+
+## Test that here_doc prevails over pipe (note, in zsh doesn't work like this)
+```bash
+bash-3.2$ printf "A\nB\nC\n" | cat | cat << EOF | wc -l
+> line1
+> line2
+> line3
+> line4
+> EOF
+       4
+bash-3.2$
+```
